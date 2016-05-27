@@ -3,11 +3,15 @@ apply plugin: 'eclipse'
 
 sourceCompatibility = 1.8
 version = '1.0'
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'CF Java Sample App',
-                   'Implementation-Version': version
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'CF Java Sample App',  
+        	'Implementation-Version': version,
+        	'Main-Class': 'com.swisscom.cloud.cloudfoundry.sampleapp.java.ProductService'
     }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 repositories {

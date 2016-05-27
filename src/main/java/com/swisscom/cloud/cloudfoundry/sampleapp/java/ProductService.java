@@ -2,6 +2,7 @@ package com.swisscom.cloud.cloudfoundry.sampleapp.java;
  
 import static spark.Spark.get;
 import static spark.Spark.post;
+import static spark.Spark.port;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -24,8 +25,10 @@ public class ProductService {
     
     public static void main( String[] args) {
     	
-        ProductRepository productRepository = new ProductRepository();
-        
+    	port(getCloudAssignedPort());
+    	
+    	ProductRepository productRepository = new ProductRepository();
+    	
         get("/", (request, response) -> {
             response.status(HTTP_OK);
             response.type("application/json");
@@ -57,7 +60,7 @@ public class ProductService {
         });
     }
 
-    public static String dataToJson(Object data) {
+    private static String dataToJson(Object data) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -67,6 +70,14 @@ public class ProductService {
         } catch (IOException exception){
             throw new RuntimeException("Could not write JSON response payload", exception);
         }
+    }
+    
+    private static int getCloudAssignedPort() {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        if (processBuilder.environment().get("PORT") != null) {
+            return Integer.parseInt(processBuilder.environment().get("PORT"));
+        }
+        return 4567; //return default port if cloud port isn't set (i.e. on localhost)
     }
     
     public static class Info {
