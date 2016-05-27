@@ -20,9 +20,17 @@ public class ProductService {
     private static final int HTTP_OK = 200;
     private static final int HTTP_BAD_REQUEST = 400;
     
+	private static final Info INFO = new Info("Your Java sample app is up and running !", "1.0.00");
+    
     public static void main( String[] args) {
     	
         ProductRepository productRepository = new ProductRepository();
+        
+        get("/", (request, response) -> {
+            response.status(HTTP_OK);
+            response.type("application/json");
+            return dataToJson(INFO);
+        });
         
         post("/products", (request, response) -> {
             try {
@@ -58,6 +66,25 @@ public class ProductService {
             return writer.toString();
         } catch (IOException exception){
             throw new RuntimeException("Could not write JSON response payload", exception);
+        }
+    }
+    
+    public static class Info {
+      	 
+    	private String status;
+        private String version;
+        
+        public Info(String status, String version) {
+        	this.status = status;
+        	this.version = version;
+        }
+       
+        public String getStatus() {
+        	return status;
+        }
+        
+        public String getVersion() {
+        	return version;
         }
     }
     
