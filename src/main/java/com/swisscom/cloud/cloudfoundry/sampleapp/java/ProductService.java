@@ -21,7 +21,7 @@ public class ProductService {
     private static final int HTTP_OK = 200;
     private static final int HTTP_BAD_REQUEST = 400;
     
-	private static final Info INFO = new Info("Your Java sample app is up and running !", "1.0.00");
+	private static final Info INFO = new Info("Your Java sample app is up and running !", "1.0.00", System.getenv().get("APP_MODE"));
     
     public static void main( String[] args) {
     	
@@ -84,10 +84,12 @@ public class ProductService {
       	 
     	private String status;
         private String version;
+        private String appMode;
         
-        public Info(String status, String version) {
+        public Info(String status, String version, String appMode) {
         	this.status = status;
         	this.version = version;
+        	this.appMode = appMode;
         }
        
         public String getStatus() {
@@ -96,6 +98,10 @@ public class ProductService {
         
         public String getVersion() {
         	return version;
+        }
+        
+        public String getAppMode() {
+        	return appMode;
         }
     }
     
