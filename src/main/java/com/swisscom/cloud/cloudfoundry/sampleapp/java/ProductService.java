@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -85,17 +86,19 @@ public class ProductService {
         return 4567; //return default port if cloud port isn't set (i.e. on localhost)
     }
     
-    private static ProductRepository getProductRepository() {
-    	Map<String,Object> redisCredentials = getRedisCredentials();
-    	return new ProductRepository(redisCredentials);
+    private static ProductRepository getProductRepository() {    	
+    	ProcessBuilder processBuilder = new ProcessBuilder();
+        String servicesJson = processBuilder.environment().get("VCAP_SERVICES");        
+        if (servicesJson != null) {
+    	 	Map<String,Object> redisCredentials = getRedisCredentials(servicesJson);
+           	return new RedisProductRepository(redisCredentials);
+        } else {
+        	return new SimpleProductRepository();
+        }
     }
     
 	@SuppressWarnings("unchecked")
-    private static Map<String,Object> getRedisCredentials() {
-        
-    	ProcessBuilder processBuilder = new ProcessBuilder();
-        String servicesJson = processBuilder.environment().get("VCAP_SERVICES");
-       
+    private static Map<String,Object> getRedisCredentials(String servicesJson) {       
         ObjectMapper mapper = new ObjectMapper();
         if (servicesJson != null) {
         	try {
@@ -172,12 +175,37 @@ public class ProductService {
         }
     }
     
-    public static class ProductRepository {
+    public interface ProductRepository {    	
+    	public long add(Product product);   	
+    	public Collection<Product> findAll();
+    }
+    
+    public static class SimpleProductRepository implements ProductRepository {
+    	
+    	private Map<Long,Product> products = new HashMap<Long,Product>();
+    	private long id;
+    	   	
+    	public long add(Product product) {
+    		product.setId(nextId());
+    		products.put(product.getId(), product);
+    		return product.getId();
+    	}
+    	
+    	public Collection<Product> findAll() {
+    		return products.values();
+    	}
+    	
+    	private long nextId() {
+    		return ++id;
+    	}
+    }
+    
+    public static class RedisProductRepository implements ProductRepository {
     	
     	private Jedis jedis;
     	private ObjectMapper mapper;
     	
-    	public ProductRepository(Map<String,Object> redisCredentials) {
+    	public RedisProductRepository(Map<String,Object> redisCredentials) {
     		jedis = new Jedis((String) redisCredentials.get("host"), (int) redisCredentials.get("port"));
     		jedis.auth((String) redisCredentials.get("password"));
     		mapper = new ObjectMapper();
