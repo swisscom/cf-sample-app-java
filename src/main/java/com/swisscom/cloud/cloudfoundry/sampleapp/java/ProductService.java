@@ -2,17 +2,22 @@ package com.swisscom.cloud.cloudfoundry.sampleapp.java;
  
 import static spark.Spark.get;
 import static spark.Spark.post;
-import static spark.Spark.port;
+import static spark.SparkBase.port;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import redis.clients.jedis.Jedis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -27,12 +32,12 @@ public class ProductService {
     	
     	port(getCloudAssignedPort());
     	
-    	ProductRepository productRepository = new ProductRepository();
+    	ProductRepository productRepository = getProductRepository();
     	
         get("/", (request, response) -> {
             response.status(HTTP_OK);
             response.type("application/json");
-            return dataToJson(INFO);
+            return mapToJson(INFO);
         });
         
         post("/products", (request, response) -> {
@@ -43,7 +48,7 @@ public class ProductService {
                     response.status(HTTP_BAD_REQUEST);
                     return "Product input invalid";
                 }
-                int id = productRepository.add(product);
+                long id = productRepository.add(product);
                 response.status(HTTP_OK);
                 response.type("application/json");
                 return id;
@@ -56,11 +61,11 @@ public class ProductService {
         get("/products", (request, response) -> {
             response.status(HTTP_OK);
             response.type("application/json");
-            return dataToJson(productRepository.findAll());
+            return mapToJson(productRepository.findAll());
         });
     }
 
-    private static String dataToJson(Object data) {
+    private static String mapToJson(Object data) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -78,6 +83,34 @@ public class ProductService {
             return Integer.parseInt(processBuilder.environment().get("PORT"));
         }
         return 4567; //return default port if cloud port isn't set (i.e. on localhost)
+    }
+    
+    private static ProductRepository getProductRepository() {
+    	Map<String,Object> redisCredentials = getRedisCredentials();
+    	return new ProductRepository(redisCredentials);
+    }
+    
+	@SuppressWarnings("unchecked")
+    private static Map<String,Object> getRedisCredentials() {
+        
+    	ProcessBuilder processBuilder = new ProcessBuilder();
+        String servicesJson = processBuilder.environment().get("VCAP_SERVICES");
+       
+        ObjectMapper mapper = new ObjectMapper();
+        if (servicesJson != null) {
+        	try {
+				Map<String,Object> services = mapper.readValue(servicesJson, new TypeReference<Map<String,Object>>() { });
+				List<Map<String,Object>> redisServices = (List<Map<String, Object>>) services.get("redis");
+				for (Map<String,Object> redisService : redisServices) {
+					// It is assumed that only one Redis service is bound to this app. Evaluate the name property 
+					// of the credentials in case multiple Redis services are bound to an app
+					return (Map<String, Object>) redisService.get("credentials");						
+				}
+        	} catch (Exception exception) {
+				throw new RuntimeException("Redis service declaration not found", exception);
+			}
+        }
+		throw new RuntimeException("Redis service declaration not found");
     }
     
     public static class Info {
@@ -107,15 +140,15 @@ public class ProductService {
     
     public static class Product {
    	 
-    	private int id;
+    	private long id;
         private String description;
         private BigDecimal price;
        
-        public int getId() {
+        public long getId() {
         	return id;
         }
         
-        public void setId(int id) {
+        public void setId(long id) {
         	this.id = id;
         }
         
@@ -141,21 +174,45 @@ public class ProductService {
     
     public static class ProductRepository {
     	
-    	private Map<Integer,Product> products = new HashMap<Integer,Product>();
-    	private int id = 0;
+    	private Jedis jedis;
+    	private ObjectMapper mapper;
     	
-    	public int add(Product product) {
+    	public ProductRepository(Map<String,Object> redisCredentials) {
+    		jedis = new Jedis((String) redisCredentials.get("host"), (int) redisCredentials.get("port"));
+    		jedis.auth((String) redisCredentials.get("password"));
+    		mapper = new ObjectMapper();
+    	}
+    	   	
+    	public long add(Product product) {
     		product.setId(nextId());
-    		this.products.put(product.getId(), product);
+    		jedis.rpush("products", mapToJson(product));
     		return product.getId();
     	}
     	
     	public Collection<Product> findAll() {
-    		return products.values();
+    		return jedis.lrange("products", 0, jedis.llen("products")).stream()
+    			.map(productJson -> mapToProduct(productJson))
+    			.collect(Collectors.toList());
     	}
     	
-    	private int nextId() {
-    		return ++id;
+    	private Long nextId() {
+    		return jedis.incr("productid");
+    	}
+    	
+    	private String mapToJson(Product product) {
+      		try {
+ 				return mapper.writeValueAsString(product);
+ 			} catch (JsonProcessingException e) {
+ 				throw new RuntimeException("Product cannot be serialized as JSON");
+ 			}
+    	}
+    	
+    	private Product mapToProduct(String productJson) {
+    		try {
+				return mapper.readValue(productJson, Product.class);
+			} catch (IOException exception) {
+				throw new RuntimeException("Product cannot be deserialized from JSON");
+			}
     	}
     }
 }
