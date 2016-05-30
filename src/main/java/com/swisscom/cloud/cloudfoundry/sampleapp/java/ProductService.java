@@ -27,12 +27,12 @@ public class ProductService {
     	
     	port(getCloudAssignedPort());
     	
-    	ProductRepository productRepository = new ProductRepository();
+    	ProductRepository productRepository = getProductRepository();
     	
         get("/", (request, response) -> {
             response.status(HTTP_OK);
             response.type("application/json");
-            return dataToJson(INFO);
+            return mapToJson(INFO);
         });
         
         post("/products", (request, response) -> {
@@ -43,7 +43,7 @@ public class ProductService {
                     response.status(HTTP_BAD_REQUEST);
                     return "Product input invalid";
                 }
-                int id = productRepository.add(product);
+                long id = productRepository.add(product);
                 response.status(HTTP_OK);
                 response.type("application/json");
                 return id;
@@ -56,11 +56,11 @@ public class ProductService {
         get("/products", (request, response) -> {
             response.status(HTTP_OK);
             response.type("application/json");
-            return dataToJson(productRepository.findAll());
+            return mapToJson(productRepository.findAll());
         });
     }
 
-    private static String dataToJson(Object data) {
+    private static String mapToJson(Object data) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -78,6 +78,10 @@ public class ProductService {
             return Integer.parseInt(processBuilder.environment().get("PORT"));
         }
         return 4567; //return default port if cloud port isn't set (i.e. on localhost)
+    }
+    
+    private static ProductRepository getProductRepository() {    	
+       	return new SimpleProductRepository();
     }
     
     public static class Info {
@@ -107,15 +111,15 @@ public class ProductService {
     
     public static class Product {
    	 
-    	private int id;
+    	private long id;
         private String description;
         private BigDecimal price;
        
-        public int getId() {
+        public long getId() {
         	return id;
         }
         
-        public void setId(int id) {
+        public void setId(long id) {
         	this.id = id;
         }
         
@@ -139,22 +143,29 @@ public class ProductService {
         }
     }
     
-    public static class ProductRepository {
+    public interface ProductRepository {    	
+    	public long add(Product product);   	
+    	public Collection<Product> findAll();
+    }
+    
+    public static class SimpleProductRepository implements ProductRepository {
     	
-    	private Map<Integer,Product> products = new HashMap<Integer,Product>();
-    	private int id = 0;
-    	
-    	public int add(Product product) {
+    	private Map<Long,Product> products = new HashMap<Long,Product>();
+    	private long id;
+    	   	
+    	@Override
+    	public long add(Product product) {
     		product.setId(nextId());
-    		this.products.put(product.getId(), product);
+    		products.put(product.getId(), product);
     		return product.getId();
     	}
     	
+    	@Override
     	public Collection<Product> findAll() {
     		return products.values();
     	}
     	
-    	private int nextId() {
+    	private long nextId() {
     		return ++id;
     	}
     }
