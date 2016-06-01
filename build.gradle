@@ -5,7 +5,7 @@ version = '1.0'
 
 jar {
     manifest {
-        attributes 'Implementation-Title': 'CF Java Sample App',  
+        attributes 'Implementation-Title': 'CF Java Sample App',
         	'Implementation-Version': version,
         	'Main-Class': 'com.swisscom.cloud.cloudfoundry.sampleapp.java.ProductService'
     }
