@@ -7,7 +7,7 @@ A sample Java [Spark](http://sparkjava.com) application to deploy to Cloud Found
 1. Install the [Java JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 1. Install [Gradle](https://gradle.org/gradle-download/)
 1. Run `gradle build`
-1. Run `java -java build/libs/cf-sample-java-1.0.jar`
+1. Run `java -jar build/libs/cf-sample-java-1.0.jar`
 1. Visit [http://localhost:4567](http://localhost:4567)
 
 ## Run in the cloud
