@@ -1,11 +1,11 @@
 apply plugin: 'java'
 
 sourceCompatibility = 1.8
-version = '1.0'
+version = '1.0.0'
 
 jar {
     manifest {
-        attributes 'Implementation-Title': 'CF Java Sample App',
+        attributes 'Implementation-Title': 'CF Sample App Java',
         	'Implementation-Version': version,
         	'Main-Class': 'com.swisscom.cloud.cloudfoundry.sampleapp.java.ProductService'
     }
@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.sparkjava:spark-core:2.2'
+    compile 'com.sparkjava:spark-core:2.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
 	compile 'redis.clients:jedis:2.6.2'
 }
