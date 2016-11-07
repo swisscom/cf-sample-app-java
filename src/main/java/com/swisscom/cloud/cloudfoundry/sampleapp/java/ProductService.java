@@ -21,7 +21,7 @@ public class ProductService {
     private static final int HTTP_OK = 200;
     private static final int HTTP_BAD_REQUEST = 400;
 
-	private static final Info INFO = new Info("Your Java sample app is up and running !", "1.0.0", System.getenv().get("APP_MODE"));
+	private static final Info INFO = new Info("Your Java sample app is up and running!", "1.0.0", System.getenv().get("APP_MODE"));
 
     public static void main( String[] args) {
 
