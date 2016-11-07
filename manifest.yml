@@ -1,0 +1,12 @@
+---
+applications:
+- name: my-java-app
+  memory: 1G
+  instances: 1
+  buildpack: java_buildpack
+  path: build/libs/cf-sample-app-java-1.0.0.jar
+
+  host: my-random-hostname
+
+  services:
+  - my-redis-service

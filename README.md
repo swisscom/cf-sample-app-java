@@ -16,5 +16,5 @@ A sample Java [Spark](http://sparkjava.com) application to deploy to Cloud Found
 1. Install [Gradle](https://gradle.org/gradle-download/)
 1. Install the [cf CLI](https://github.com/cloudfoundry/cli#downloads)
 1. Run `gradle build`
-1. Run `cf push my-java-app -p build/libs/cf-sample-app-java-1.0.0.jar --random-route`
+1. Run `cf push`
 1. Visit the given URL
