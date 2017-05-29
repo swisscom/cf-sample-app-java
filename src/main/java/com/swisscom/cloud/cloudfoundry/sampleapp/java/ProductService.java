@@ -27,13 +27,13 @@ public class ProductService {
     private static final int HTTP_OK = 200;
     private static final int HTTP_BAD_REQUEST = 400;
 
-	private static final Info INFO = new Info("I am awesome!", "1.0.0", System.getenv().get("APP_MODE"));
+    private static final Info INFO = new Info("I am awesome!", "1.0.0", System.getenv().get("APP_MODE"));
 
     public static void main( String[] args) {
 
-    	port(getCloudAssignedPort());
+        port(getCloudAssignedPort());
 
-    	ProductRepository productRepository = getProductRepository();
+        ProductRepository productRepository = getProductRepository();
 
         get("/", (request, response) -> {
             response.status(HTTP_OK);
@@ -87,162 +87,162 @@ public class ProductService {
     }
 
     private static ProductRepository getProductRepository() {
-    	ProcessBuilder processBuilder = new ProcessBuilder();
+        ProcessBuilder processBuilder = new ProcessBuilder();
         String servicesJson = processBuilder.environment().get("VCAP_SERVICES");
         if (servicesJson != null) {
-    	 	Map<String,Object> redisCredentials = getRedisCredentials(servicesJson);
-           	return new RedisProductRepository(redisCredentials);
+            Map<String,Object> redisCredentials = getRedisCredentials(servicesJson);
+            return new RedisProductRepository(redisCredentials);
         } else {
-        	return new SimpleProductRepository();
+            return new SimpleProductRepository();
         }
     }
 
-	@SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     private static Map<String,Object> getRedisCredentials(String servicesJson) {
         ObjectMapper mapper = new ObjectMapper();
         if (servicesJson != null) {
-        	try {
-				Map<String,Object> services = mapper.readValue(servicesJson, new TypeReference<Map<String,Object>>() { });
-				List<Map<String,Object>> redisServices = (List<Map<String, Object>>) services.get("redis");
-				for (Map<String,Object> redisService : redisServices) {
-					// It is assumed that only one Redis service is bound to this app. Evaluate the name property
-					// of the credentials in case multiple Redis services are bound to an app
-					return (Map<String, Object>) redisService.get("credentials");
-				}
-        	} catch (Exception exception) {
-				throw new RuntimeException("Redis service declaration not found", exception);
-			}
+            try {
+                Map<String,Object> services = mapper.readValue(servicesJson, new TypeReference<Map<String,Object>>() { });
+                List<Map<String,Object>> redisServices = (List<Map<String, Object>>) services.get("redis");
+                for (Map<String,Object> redisService : redisServices) {
+                    // It is assumed that only one Redis service is bound to this app. Evaluate the name property
+                    // of the credentials in case multiple Redis services are bound to an app
+                    return (Map<String, Object>) redisService.get("credentials");
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException("Redis service declaration not found", exception);
+            }
         }
-		throw new RuntimeException("Redis service declaration not found");
+        throw new RuntimeException("Redis service declaration not found");
     }
 
     public static class Info {
 
-    	private String status;
+        private String status;
         private String version;
         private String appMode;
 
         public Info(String status, String version, String appMode) {
-        	this.status = status;
-        	this.version = version;
-        	this.appMode = appMode;
+            this.status = status;
+            this.version = version;
+            this.appMode = appMode;
         }
 
         public String getStatus() {
-        	return status;
+            return status;
         }
 
         public String getVersion() {
-        	return version;
+            return version;
         }
 
         public String getAppMode() {
-        	return appMode;
+            return appMode;
         }
     }
 
     public static class Product {
 
-    	private long id;
+        private long id;
         private String description;
         private BigDecimal price;
 
         public long getId() {
-        	return id;
+            return id;
         }
 
         public void setId(long id) {
-        	this.id = id;
+            this.id = id;
         }
 
         public String getDescription() {
-        	return description;
+            return description;
         }
 
         public BigDecimal getPrice() {
-        	return price;
+            return price;
         }
 
         @JsonIgnore
         public boolean isValid() {
-        	if (description == null || description.isEmpty()) {
-        		return false;
-        	}
-        	if (price == null) {
-        		return false;
-        	}
-        	return true;
+            if (description == null || description.isEmpty()) {
+                return false;
+            }
+            if (price == null) {
+                return false;
+            }
+            return true;
         }
     }
 
     public interface ProductRepository {
-    	public long add(Product product);
-    	public Collection<Product> findAll();
+        public long add(Product product);
+        public Collection<Product> findAll();
     }
 
     public static class SimpleProductRepository implements ProductRepository {
 
-    	private Map<Long,Product> products = new HashMap<Long,Product>();
-    	private long id;
+        private Map<Long,Product> products = new HashMap<Long,Product>();
+        private long id;
 
-    	@Override
-    	public long add(Product product) {
-    		product.setId(nextId());
-    		products.put(product.getId(), product);
-    		return product.getId();
-    	}
+        @Override
+        public long add(Product product) {
+            product.setId(nextId());
+            products.put(product.getId(), product);
+            return product.getId();
+        }
 
-    	@Override
-    	public Collection<Product> findAll() {
-    		return products.values();
-    	}
+        @Override
+        public Collection<Product> findAll() {
+            return products.values();
+        }
 
-    	private long nextId() {
-    		return ++id;
-    	}
+        private long nextId() {
+            return ++id;
+        }
     }
 
     public static class RedisProductRepository implements ProductRepository {
 
-    	private Jedis jedis;
-    	private ObjectMapper mapper;
+        private Jedis jedis;
+        private ObjectMapper mapper;
 
-    	public RedisProductRepository(Map<String,Object> redisCredentials) {
-    		jedis = new Jedis((String) redisCredentials.get("host"), (int) redisCredentials.get("port"));
-    		jedis.auth((String) redisCredentials.get("password"));
-    		mapper = new ObjectMapper();
-    	}
+        public RedisProductRepository(Map<String,Object> redisCredentials) {
+            jedis = new Jedis((String) redisCredentials.get("host"), (int) redisCredentials.get("port"));
+            jedis.auth((String) redisCredentials.get("password"));
+            mapper = new ObjectMapper();
+        }
 
-    	public long add(Product product) {
-    		product.setId(nextId());
-    		jedis.rpush("products", mapToJson(product));
-    		return product.getId();
-    	}
+        public long add(Product product) {
+            product.setId(nextId());
+            jedis.rpush("products", mapToJson(product));
+            return product.getId();
+        }
 
-    	public Collection<Product> findAll() {
-    		return jedis.lrange("products", 0, jedis.llen("products")).stream()
-    			.map(productJson -> mapToProduct(productJson))
-    			.collect(Collectors.toList());
-    	}
+        public Collection<Product> findAll() {
+            return jedis.lrange("products", 0, jedis.llen("products")).stream()
+                .map(productJson -> mapToProduct(productJson))
+                .collect(Collectors.toList());
+        }
 
-    	private Long nextId() {
-    		return jedis.incr("productid");
-    	}
+        private Long nextId() {
+            return jedis.incr("productid");
+        }
 
-    	private String mapToJson(Product product) {
-      		try {
- 				return mapper.writeValueAsString(product);
- 			} catch (JsonProcessingException e) {
- 				throw new RuntimeException("Product cannot be serialized as JSON");
- 			}
-    	}
+        private String mapToJson(Product product) {
+            try {
+                return mapper.writeValueAsString(product);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Product cannot be serialized as JSON");
+            }
+        }
 
-    	private Product mapToProduct(String productJson) {
-    		try {
-				return mapper.readValue(productJson, Product.class);
-			} catch (IOException exception) {
-				throw new RuntimeException("Product cannot be deserialized from JSON");
-			}
-    	}
+        private Product mapToProduct(String productJson) {
+            try {
+                return mapper.readValue(productJson, Product.class);
+            } catch (IOException exception) {
+                throw new RuntimeException("Product cannot be deserialized from JSON");
+            }
+        }
     }
 }
