@@ -25,9 +25,9 @@ public class ProductService {
 
     public static void main( String[] args) {
 
-    	port(getCloudAssignedPort());
+        port(getCloudAssignedPort());
 
-    	ProductRepository productRepository = getProductRepository();
+        ProductRepository productRepository = getProductRepository();
 
         get("/", (request, response) -> {
             response.status(HTTP_OK);
@@ -81,92 +81,92 @@ public class ProductService {
     }
 
     private static ProductRepository getProductRepository() {
-       	return new SimpleProductRepository();
+        return new SimpleProductRepository();
     }
 
     public static class Info {
 
-    	private String status;
+        private String status;
         private String version;
         private String appMode;
 
         public Info(String status, String version, String appMode) {
-        	this.status = status;
-        	this.version = version;
-        	this.appMode = appMode;
+            this.status = status;
+            this.version = version;
+            this.appMode = appMode;
         }
 
         public String getStatus() {
-        	return status;
+            return status;
         }
 
         public String getVersion() {
-        	return version;
+            return version;
         }
 
         public String getAppMode() {
-        	return appMode;
+            return appMode;
         }
     }
 
     public static class Product {
 
-    	private long id;
+        private long id;
         private String description;
         private BigDecimal price;
 
         public long getId() {
-        	return id;
+            return id;
         }
 
         public void setId(long id) {
-        	this.id = id;
+            this.id = id;
         }
 
         public String getDescription() {
-        	return description;
+            return description;
         }
 
         public BigDecimal getPrice() {
-        	return price;
+            return price;
         }
 
         @JsonIgnore
         public boolean isValid() {
-        	if (description == null || description.isEmpty()) {
-        		return false;
-        	}
-        	if (price == null) {
-        		return false;
-        	}
-        	return true;
+            if (description == null || description.isEmpty()) {
+                return false;
+            }
+            if (price == null) {
+                return false;
+            }
+            return true;
         }
     }
 
     public interface ProductRepository {
-    	public long add(Product product);
-    	public Collection<Product> findAll();
+        public long add(Product product);
+        public Collection<Product> findAll();
     }
 
     public static class SimpleProductRepository implements ProductRepository {
 
-    	private Map<Long,Product> products = new HashMap<Long,Product>();
-    	private long id;
+        private Map<Long,Product> products = new HashMap<Long,Product>();
+        private long id;
 
-    	@Override
-    	public long add(Product product) {
-    		product.setId(nextId());
-    		products.put(product.getId(), product);
-    		return product.getId();
-    	}
+        @Override
+        public long add(Product product) {
+            product.setId(nextId());
+            products.put(product.getId(), product);
+            return product.getId();
+        }
 
-    	@Override
-    	public Collection<Product> findAll() {
-    		return products.values();
-    	}
+        @Override
+        public Collection<Product> findAll() {
+            return products.values();
+        }
 
-    	private long nextId() {
-    		return ++id;
-    	}
+        private long nextId() {
+            return ++id;
+        }
     }
 }
