@@ -2,7 +2,7 @@ package com.swisscom.cloud.cloudfoundry.sampleapp.java;
 
 import static spark.Spark.get;
 import static spark.Spark.post;
-import static spark.SparkBase.port;
+import static spark.Spark.port;
 
 import java.io.IOException;
 import java.io.StringWriter;
