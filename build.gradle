@@ -24,6 +24,7 @@ repositories {
 dependencies {
     compile 'com.sparkjava:spark-core:2.5'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.4'
+    compile 'org.slf4j:slf4j-simple:1.7.25'
 }
 
 uploadArchives {
