@@ -5,7 +5,8 @@ applications:
   buildpack: java_buildpack
   path: build/libs/cf-sample-app-java-1.0.0.jar
 
-  host: my-random-hostname
+  routes:
+  - route: my-random-hostname.scapp.io
 
   services:
   - my-redis
